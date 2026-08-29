@@ -1,7 +1,11 @@
 NON-COMMERCIAL SOURCE-AVAILABLE LICENSE
 
+
 Copyright (c) 2026 o30m MSME (Udyam) Bhavesh M. Dhake
+
+
 All rights reserved.
+
 
 1. GRANT OF PERMISSION
 
@@ -10,12 +14,17 @@ grants any person a non-exclusive, worldwide, royalty-free, non-transferable
 license to:
 
 a. view and read the source code;
+
 b. download and obtain copies of the source code;
+
 c. study and learn from the source code;
+
 d. execute and use the software for personal, educational, academic,
    research, laboratory, CTF, authorized security-testing, and other
    non-commercial purposes;
+
 e. modify the source code for non-commercial purposes; and
+
 f. share and redistribute unmodified or modified copies of the software
    for non-commercial purposes.
 
