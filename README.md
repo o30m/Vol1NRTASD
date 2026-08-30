@@ -5,9 +5,12 @@
 
 # =============================================================================
 
-### Language : Python ( ref. https://www.python.org/ )
-### Library : Scapy ( ref. https://github.com/secdev/scapy )
-### File : Volatile.py ( ref. https://github.com/secdev/scapy/blob/master/scapy/volatile.py )
+## Language : Python ( ref. https://www.python.org/ )
+## Library : Scapy ( ref. https://github.com/secdev/scapy )
+
+# =============================================================================
+
+## File 1 : Volatile.py ( ref. https://github.com/secdev/scapy/blob/master/scapy/volatile.py )
 
 ================================================================================
 
@@ -117,59 +120,12 @@ CorruptedBits Introduces random bit corruptions (not just bytes) in a given stri
 
 =============================================================================================
 
-### Capability from modification 1 :
+### Capability from modification 1 : Dynamic network-field manipulation, Stateless Protocol Fuzzer, Polymorphic Traffic Signature Generator, Layer 3 IP Spoofing Injection Engine
 
-Dynamic network-field manipulation
+File 1 : Backup program : 1AsynchronousVolatileFieldProtocolFuzzer.py
 
-The most direct capability is making packet fields dynamically change between evaluations.
+File 2 : Professional Tool : 2PolymorphicAsynchronousVolatileFieldProtocolFuzzer.py
 
-Using:
+File 3 : Documentation & POC : 3PolymorphicAsynchronousVolatileFieldProtocolFuzzer.pdf
 
-● RandNum
-
-● RandFloat
-
-● RandByte / RandShort / RandInt / RandLong
-
-● RandIP
-
-● RandIP6
-
-● RandMAC
-
-● RandUUID
-
-● RandString
-
-● RandBin
-
-● RandChoice
-
-● RandEnumKeys
-
-you can build volatile packet fields such as:
-
-● changing source/destination addresses
-
-● changing source/destination ports
-
-● changing protocol identifiers
-
-● changing sequence-like numeric fields
-
-● changing identifiers
-
-● changing payload lengths
-
-● changing textual fields
-
-● changing binary fields
-
-● changing option values
-
-● changing application identifiers
-
-The important capability is not any individual random generator, but the ability to have multiple
-packet fields independently or jointly vary on every evaluation.
-
-===================================================================================
+# ===================================================================================
