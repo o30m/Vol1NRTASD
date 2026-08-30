@@ -5,3 +5,6 @@
 
 =============================================================================
 
+### Language : Python ( ref. https://www.python.org/ )
+### Library : Scapy ( ref. https://github.com/secdev/scapy )
+### File : Volatile.py ( ref. https://github.com/secdev/scapy/blob/master/scapy/volatile.py )
