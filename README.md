@@ -20,7 +20,7 @@ Modular Polymorphic Traffic Generation Architecture & Volatile Field-Simulation 
 
 =============================================================================================
 
-### Capability from modification 1 : 
+### Capability from modification 1 : Polymorphic Non-Deterministic Traffic Generator & Volatile Multi-Field Packet Fuzzer
 
 Dynamic network-field manipulation, Stateless Protocol Fuzzer, Polymorphic Traffic Signature Generator, Layer 3 IP Spoofing Injection Engine
 
