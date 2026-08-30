@@ -1,7 +1,7 @@
-<img width="1254" height="1254" alt="Logo" src="https://github.com/user-attachments/assets/d127589e-1592-4e6a-80e9-c981c6c4ce74" />
+<img width="690" height="685" alt="netimg" src="https://github.com/user-attachments/assets/6b048bb4-b7cb-41c6-acb5-fd327c486e41" />
 
 
-# Certified Network Red Team Adversary Simulation Associate in Python(Scapy)
+# Research Specialization in Network Red Team Adversary Simulation Development
 
 =============================================================================
 
