@@ -1,0 +1,377 @@
+
+```text
+                         ┌──────────────────────────────┐
+                         │          main()              │
+                         │  IPv6 Reconnaissance Entry   │
+                         └──────────────┬───────────────┘
+                                        │
+                                        ▼
+                         ┌──────────────────────────────┐
+                         │       IPv6Recon()             │
+                         │       Initialization         │
+                         └──────────────┬───────────────┘
+                                        │
+                     ┌──────────────────┼──────────────────┐
+                     │                  │                  │
+                     ▼                  ▼                  ▼
+              get_interfaces()   get_routing_table()  get_neighbors()
+                     │                  │                  │
+                     │                  │                  │
+                     ▼                  ▼                  ▼
+              Interface Data       IPv6 Routes       Neighbor Cache
+              IPv6 Addresses       Prefixes          Neighbor State
+              MAC Addresses        Next Hops         Interfaces
+                     │                  │                  │
+                     └──────────────────┼──────────────────┘
+                                        │
+                                        ▼
+                         ┌──────────────────────────────┐
+                         │      analyze_system()        │
+                         │  Central Analysis Pipeline   │
+                         └──────────────┬───────────────┘
+                                        │
+          ┌─────────────────────────────┼─────────────────────────────┐
+          │                             │                             │
+          ▼                             ▼                             ▼
+ ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+ │ analyze_         │         │ analyze_         │         │ detect_transition│
+ │ interfaces()     │         │ routing()        │         │ technologies()   │
+ └────────┬─────────┘         └──────────────────┘         └────────┬─────────┘
+          │                                                         │
+          ▼                                                         ▼
+ ┌──────────────────┐                                    ┌────────────────────┐
+ │ analyze_address()│                                    │ 6to4 / Teredo /   │
+ │ for every IPv6   │                                    │ ULA detection      │
+ │ address          │                                    └────────────────────┘
+ └────────┬─────────┘
+          │
+          ▼
+ ┌────────────────────────────────────────────────────────────┐
+ │                 IPv6 ADDRESS ANALYSIS                      │
+ └──────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+                  ┌─────────────────────┐
+                  │   in6_isvalid()     │
+                  │ Validate IPv6       │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │     in6_ptop()      │
+                  │ Canonicalize IPv6   │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ in6_getAddrType()   │
+                  │ Type Classification │
+                  └──────────┬──────────┘
+                             │
+               ┌─────────────┼─────────────┐
+               │             │             │
+               ▼             ▼             ▼
+          UNICAST        MULTICAST     SPECIAL
+               │             │             │
+               │             │             ├── LOOPBACK
+               │             │             └── UNSPECIFIED
+               │             │
+               │             ▼
+               │      ┌────────────────────┐
+               │      │ Multicast Scope    │
+               │      │ / Group Analysis   │
+               │      └────────────────────┘
+               │
+               ▼
+      ┌─────────────────────┐
+      │   in6_getscope()    │
+      │ Scope Determination │
+      └──────────┬──────────┘
+                 │
+      ┌──────────┼───────────────────────────────────┐
+      │          │                                   │
+      ▼          ▼                                   ▼
+   GLOBAL    LINK-LOCAL                         SITE-LOCAL
+      │          │                                   │
+      └──────────┼───────────────────────────────────┘
+                 │
+                 ▼
+      ┌──────────────────────────────────────────────┐
+      │       Address Property Detection             │
+      └──────────────────────┬───────────────────────┘
+                             │
+       ┌──────────┬──────────┼──────────┬──────────┐
+       │          │          │          │          │
+       ▼          ▼          ▼          ▼          ▼
+    ULA        DOC        EUI-64     ANYCAST   SOLICITED
+   isuladdr  isdocaddr  in6_iseui64  isanycast  NODE
+       │          │          │          │          │
+       │          │          │          │          └─ in6_isllsnmaddr()
+       │          │          │          │
+       │          │          │          └───────────────┐
+       │          │          │                           │
+       │          │          ▼                           │
+       │          │    ┌───────────────┐                │
+       │          │    │ EUI-64 Found? │                │
+       │          │    └───────┬───────┘                │
+       │          │            │ YES                    │
+       │          │            ▼                        │
+       │          │    ┌──────────────────┐             │
+       │          │    │ in6_addrtomac()  │             │
+       │          │    │ IPv6 → MAC       │             │
+       │          │    └────────┬─────────┘             │
+       │          │             │                       │
+       │          │             ▼                       │
+       │          │    ┌──────────────────┐             │
+       │          │    │ in6_addrtovendor │             │
+       │          │    │ MAC → Vendor     │             │
+       │          │    └──────────────────┘             │
+       │          │                                     │
+       └──────────┴─────────────────────────────────────┘
+                             │
+                             ▼
+                 ┌──────────────────────────┐
+                 │ Transition Technology    │
+                 │ Detection                │
+                 └────────────┬─────────────┘
+                              │
+                    ┌─────────┴──────────┐
+                    │                    │
+                    ▼                    ▼
+              ┌────────────┐       ┌─────────────┐
+              │    6to4    │       │   Teredo    │
+              └─────┬──────┘       └──────┬──────┘
+                    │                     │
+                    ▼                     ▼
+          in6_6to4ExtractAddr()    teredoAddrExtractInfo()
+                    │                     │
+                    ▼                     ▼
+             Embedded IPv4       Server / Flag /
+                                  Mapped IPv4 /
+                                  Mapped Port
+```
+
+### Core address/network primitives underneath everything
+
+```text
+                     IPv6 CORE PRIMITIVES
+                              │
+          ┌───────────────────┼────────────────────┐
+          │                   │                    │
+          ▼                   ▼                    ▼
+     in6_and()           in6_or()             in6_xor()
+          │                   │                    │
+          └───────────────────┼────────────────────┘
+                              │
+                              ▼
+                    Prefix / Bit Operations
+                              │
+              ┌───────────────┼────────────────┐
+              │               │                │
+              ▼               ▼                ▼
+       in6_cidr2mask()  in6_mask2cidr()  in6_get_common_plen()
+              │               │                │
+              └───────────────┼────────────────┘
+                              │
+                              ▼
+                     in6_isincluded()
+                              │
+                              ▼
+                    IPv6 Prefix Membership
+                              │
+                              ▼
+                           Net6
+                     ┌────────┴────────┐
+                     │                 │
+                     ▼                 ▼
+              Network Range       Address
+                Modeling          Iteration
+```
+
+### Identity-generation branch
+
+This is the other major core branch explicitly present in the uploaded code:
+
+```text
+                     SOURCE IDENTITY ENGINE
+                              │
+                              ▼
+                generate_source_identities()
+                              │
+             ┌────────────────┴────────────────┐
+             │                                 │
+             ▼                                 ▼
+        Interface MAC                    Randomized IID
+             │                                 │
+             ▼                                 ▼
+    in6_mactoifaceid()              in6_getRandomizedIfaceId()
+             │                                 │
+             ▼                                 ▼
+       Hardware-derived                 Randomized
+          EUI-64                         Interface ID
+             │                                 │
+             └────────────────┬────────────────┘
+                              │
+                              ▼
+                    Candidate IPv6 Identities
+                              │
+                              ▼
+                         IPv6 Addresses
+```
+
+### Multicast-target branch
+
+```text
+                    MULTICAST TARGET ENGINE
+                              │
+                              ▼
+                    get_multicast_targets()
+                              │
+                 ┌────────────┴────────────┐
+                 │                         │
+                 ▼                         ▼
+          Link-local IPv6              All-nodes
+                 │                     multicast
+                 ▼                         │
+          in6_getnsma()                    │
+                 │                         │
+                 ▼                         ▼
+       Solicited-node IPv6             ff02::1
+                 │                         │
+                 ▼                         │
+          in6_getnsmac()                  │
+                 │                         │
+                 └────────────┬────────────┘
+                              ▼
+                    Multicast Target Records
+                              │
+                              ▼
+                 IPv6 Multicast Address
+                         +
+                 Multicast MAC
+```
+
+### Complete high-level architecture
+
+Putting the **whole program** together while removing implementation details and keeping only the main/core logic:
+
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│                  IPv6 REAL SYSTEM RECON TOOLKIT                      │
+└──────────────────────────────────┬───────────────────────────────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────┐
+                        │   SYSTEM COLLECTION │
+                        └──────────┬──────────┘
+                                   │
+             ┌─────────────────────┼─────────────────────┐
+             ▼                     ▼                     ▼
+      Network Interfaces      IPv6 Routing          Neighbor Cache
+      get_interfaces()       get_routing_table()    get_neighbors()
+             │                     │                     │
+             └─────────────────────┼─────────────────────┘
+                                   ▼
+                        ┌─────────────────────┐
+                        │  IPv6Recon OBJECT   │
+                        └──────────┬──────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────┐
+                        │  ANALYSIS ENGINE    │
+                        └──────────┬──────────┘
+                                   │
+        ┌──────────────────────────┼──────────────────────────┐
+        ▼                          ▼                          ▼
+ INTERFACE ANALYSIS          ROUTE ANALYSIS             NEIGHBOR ANALYSIS
+        │                          │                          │
+        ▼                          │                          ▼
+ ADDRESS ANALYSIS                 │                  State / Scope /
+        │                          │                  EUI-64 Analysis
+        ▼                          │
+ ┌──────────────────────┐          │
+ │ IPv6 Classification  │          │
+ └──────────┬───────────┘          │
+            │                      │
+            ├── Validity           │
+            ├── Normalization      │
+            ├── Type               │
+            ├── Scope              │
+            ├── Global             │
+            ├── Link-local         │
+            ├── ULA                │
+            ├── Multicast         │
+            ├── Anycast            │
+            ├── Solicited-node    │
+            ├── Documentation      │
+            └── Special addresses  │
+                                   │
+            ┌──────────────────────┴──────────────────────┐
+            ▼                                             ▼
+   IDENTITY ANALYSIS                           TRANSITION ANALYSIS
+            │                                             │
+     ┌──────┴──────┐                              ┌───────┴───────┐
+     ▼             ▼                              ▼               ▼
+   EUI-64      Randomized IID                   6to4            Teredo
+     │             │                              │               │
+     ▼             ▼                              ▼               ▼
+    MAC        Source Identity               IPv4 extract    Address info
+     │
+     ▼
+   Vendor
+            │
+            └──────────────────────┬──────────────────────┘
+                                   ▼
+                         ┌─────────────────────┐
+                         │  RECON INTELLIGENCE │
+                         └──────────┬──────────┘
+                                    │
+          ┌─────────────────────────┼─────────────────────────┐
+          ▼                         ▼                         ▼
+    System Summary            Source Identities        Multicast Targets
+          │                         │                         │
+          └─────────────────────────┼─────────────────────────┘
+                                    ▼
+                         ┌─────────────────────┐
+                         │   REPORT / OUTPUT   │
+                         └─────────────────────┘
+```
+
+The **actual top-level logic** of the uploaded file is therefore essentially:
+
+```text
+SYSTEM
+  │
+  ├── Interfaces
+  ├── Routes
+  └── Neighbors
+        │
+        ▼
+   IPv6Recon
+        │
+        ├── Interface Analysis
+        │      └── Address Analysis
+        │             ├── Type / Scope
+        │             ├── Special Address Detection
+        │             ├── EUI-64 → MAC → Vendor
+        │             └── 6to4 / Teredo
+        │
+        ├── Routing Analysis
+        │
+        ├── Neighbor Analysis
+        │
+        ├── Transition Detection
+        │
+        ├── Source Identity Generation
+        │      ├── MAC → EUI-64
+        │      └── Randomized IID
+        │
+        ├── Multicast Target Generation
+        │      ├── Solicited-node
+        │      └── All-nodes
+        │
+        └── Summary
+                │
+                ▼
+             OUTPUT
+```
