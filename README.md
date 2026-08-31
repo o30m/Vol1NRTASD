@@ -3,15 +3,15 @@
 
 # Research Specialization in Network Red Team Adversary Simulation Development
 
-# =============================================================================
+# =============================================
 
 ## Language 1 : Python ( ref. https://www.python.org/ )
 
-## ==============================================================================
+## =============================================
 
 ### Library 1 : Scapy ( ref. https://github.com/secdev/scapy )
 
-### =============================================================================
+### =============================================
 
 #### File 1 : Volatile.py ( ref. https://github.com/secdev/scapy/blob/master/scapy/volatile.py )
 
@@ -33,4 +33,4 @@ File 3 : Documentation & POC : 3PolymorphicAsynchronousVolatileFieldProtocolFuzz
 File 4 : Logic Flowchart : 4PolymorphicAsynchronousVolatileFieldProtocolFuzzer.txt
 
 
-#### ===================================================================================
+#### =============================================
