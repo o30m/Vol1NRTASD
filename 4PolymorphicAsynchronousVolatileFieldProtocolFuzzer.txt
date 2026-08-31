@@ -1,0 +1,459 @@
+┌──────────────────────────────────────────────┐
+│                    START                     │
+│              __main__ → main()              │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+             ┌───────────────────┐
+             │ Check root access │
+             └─────────┬─────────┘
+                       │
+                       ▼
+             ┌───────────────────────┐
+             │ demo_randomization()  │
+             │                       │
+             │ VolatilePacket        │
+             │ get_current_fields()  │
+             │       ↓               │
+             │ Display changing      │
+             │ field values          │
+             └──────────┬────────────┘
+                        │
+                        ▼
+             ┌───────────────────────┐
+             │ Select sending mode   │
+             │ Layer 2 / Layer 3     │
+             └──────────┬────────────┘
+                        │
+                        ▼
+             ┌───────────────────────┐
+             │ Get destination       │
+             │ dest_ip / dest_port  │
+             └──────────┬────────────┘
+                        │
+                        ▼
+             ┌───────────────────────┐
+             │ Get packet count      │
+             └──────────┬────────────┘
+                        │
+                        ▼
+             ┌────────────────────────┐
+             │ Select source-IP mode  │
+             │ REAL / RANDOM          │
+             └───────────┬────────────┘
+                         │
+                         ▼
+             ┌────────────────────────┐
+             │ Select field mode      │
+             │ RANDOMIZED / FIXED     │
+             └───────────┬────────────┘
+                         │
+                         ▼
+                 ┌────────────────┐
+                 │ Root available?│
+                 └───────┬─────┬──┘
+                         │YES  │NO
+                         │     │
+                         │     ▼
+                         │  ┌────────────────────┐
+                         │  │ Demo only          │
+                         │  │ No packets sent    │
+                         │  └────────────────────┘
+                         │
+                         ▼
+              ┌─────────────────────────┐
+              │ RANDOMIZED selected?    │
+              └───────────┬─────────┬───┘
+                          │YES      │NO
+                          │         │
+                          ▼         ▼
+             ┌────────────────┐  ┌────────────────┐
+             │ VolatilePacket │  │  FixedPacket   │
+             │     (...)      │  │     (...)      │
+             └───────┬────────┘  └───────┬────────┘
+                     │                   │
+                     └─────────┬─────────┘
+                               │
+                               ▼
+                    send_with_response_check()
+                               │
+                               ▼
+                    ┌────────────────────┐
+                    │ Layer 2 selected?  │
+                    └─────────┬──────┬───┘
+                              │YES   │NO
+                              │      │
+                              ▼      ▼
+                ┌─────────────────┐ ┌─────────────────┐
+                │_send_layer2_    │ │_send_layer3_   │
+                │with_response()  │ │with_response()  │
+                └────────┬────────┘ └────────┬────────┘
+                         │                   │
+                         └─────────┬─────────┘
+                                   │
+                                   ▼
+                         ┌──────────────────┐
+                         │ Check interface  │
+                         │ / raw socket     │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │ ICMPListener     │
+                         │     .start()     │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                     ┌─────────────────────────┐
+                     │ Create raw send socket  │
+                     └────────────┬────────────┘
+                                  │
+                                  ▼
+                       ┌─────────────────────┐
+                       │ For each packet     │
+                       │ i = 1 ... count     │
+                       └──────────┬──────────┘
+                                  │
+                                  ▼
+                       ┌─────────────────────┐
+                       │ get_current_fields()│
+                       └──────────┬──────────┘
+                                  │
+                                  ▼
+                       ┌─────────────────────┐
+                       │ build_ip_packet()   │
+                       └──────────┬──────────┘
+                                  │
+                                  ▼
+                    ┌──────────────────────────┐
+                    │ Determine protocol       │
+                    └────────────┬─────────────┘
+                                 │
+              ┌──────────────────┼──────────────────┐
+              │                  │                  │
+              ▼                  ▼                  ▼
+       ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+       │ protocol=1  │    │ protocol=6  │    │ protocol=17 │
+       │ ICMP        │    │ TCP         │    │ UDP         │
+       └──────┬──────┘    └──────┬──────┘    └──────┬──────┘
+              │                  │                  │
+              ▼                  ▼                  ▼
+       build_icmp_packet() build_tcp_segment() build_udp_segment()
+              │                  │                  │
+              └──────────────────┼──────────────────┘
+                                 │
+                                 ▼
+                         build_payload()
+                                 │
+                 ┌───────────────┼───────────────┐
+                 │               │               │
+                 ▼               ▼               ▼
+             text payload   binary payload   mixed payload
+                 │               │               │
+                 └───────────────┼───────────────┘
+                                 │
+                                 ▼
+                           ip_checksum()
+                                 │
+                                 ▼
+                         Complete IP packet
+                                 │
+                    ┌────────────┴─────────────┐
+                    │                          │
+              Layer 2                         Layer 3
+                    │                          │
+                    ▼                          ▼
+             _fix_field(src_mac)          IP packet only
+                    │                          │
+                    ▼                          │
+             get_dst_mac(dest_ip)             │
+                    │                          │
+                    ▼                          │
+             Build Ethernet header            │
+                    │                          │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                            Send packet
+                         socket.send/sendto()
+                                 │
+                                 ▼
+                         More packets?
+                         ┌───────┴───────┐
+                         │YES            │NO
+                         │               │
+                         ▼               ▼
+                      next i       Close send socket
+                                         │
+                                         ▼
+                              Wait for responses
+                                         │
+                                         ▼
+                              listener.get_responses()
+                                         │
+                                         ▼
+                              ICMPListener._listen()
+                                         │
+                                         ▼
+                              ┌────────────────────┐
+                              │ Receive Ethernet   │
+                              │ packet             │
+                              └─────────┬──────────┘
+                                        │
+                                        ▼
+                                Parse IPv4 header
+                                        │
+                                        ▼
+                                Protocol = ICMP?
+                                        │
+                                        ▼
+                                ICMP Echo Reply?
+                                        │
+                                  ┌─────┴─────┐
+                                  │YES        │NO
+                                  │           │
+                                  ▼           ▼
+                         Extract response   Ignore
+                         information
+                                  │
+                                  ▼
+                         Store in responses[]
+                                  │
+                                  ▼
+                         Stop listener
+                                  │
+                                  ▼
+                         Responses received?
+                           ┌──────┴──────┐
+                           │YES          │NO
+                           ▼             ▼
+                    Report responses   Report
+                    / success          no response
+                           │             │
+                           └──────┬──────┘
+                                  │
+                                  ▼
+                               COMPLETE
+=========================================================================
+
+┌──────────────────────────────────────────────────────────────┐
+│                           START                              │
+│                    main() / __main__                        │
+└─────────────────────────────┬────────────────────────────────┘
+                              │
+                              ▼
+                 ┌─────────────────────────┐
+                 │ demo_randomization()    │
+                 │                         │
+                 │ Demonstrates that       │
+                 │ fields change between   │
+                 │ evaluations             │
+                 └────────────┬────────────┘
+                              │
+                              ▼
+                 ┌─────────────────────────┐
+                 │ USER CONFIGURATION      │
+                 │                         │
+                 │ • Destination IP        │
+                 │ • Destination port      │
+                 │ • Packet count          │
+                 │ • Layer 2 / Layer 3     │
+                 │ • Real IP / Random IP   │
+                 │ • Randomized / Fixed    │
+                 └────────────┬────────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │ RANDOMIZED MODE?  │
+                    └─────────┬─────────┘
+                         YES  │  NO
+                    ┌─────────┘  └───────────┐
+                    ▼                        ▼
+       ┌────────────────────────┐   ┌────────────────────┐
+       │    VolatilePacket      │   │    FixedPacket     │
+       └────────────┬───────────┘   └─────────┬──────────┘
+                    │                         │
+                    │                         │
+                    ▼                         ▼
+┌─────────────────────────────────┐   ┌────────────────────┐
+│ INITIALIZE VOLATILE FIELDS      │   │ Fixed field values │
+│                                 │   │                    │
+│ Each field → VolatileValue      │   │ • Real source IP   │
+│ generator object                │   │ • Real source MAC  │
+│                                 │   │ • Fixed protocol   │
+│ 1. src_mac     → RandMAC        │   │ • Fixed TTL        │
+│ 2. src_ip      → RandIP         │   │ • Fixed payload    │
+│ 3. protocol    → RandChoice     │   │ • Fixed ID        │
+│ 4. ttl         → RandNum        │   │ • Fixed sequence   │
+│ 5. tos         → RandNum        │   │                    │
+│ 6. src_port    → RandShort      │   └─────────┬──────────┘
+│ 7. seq_num     → RandInt        │             │
+│ 8. ack_num     → RandInt        │             │
+│ 9. tcp_flags   → RandChoice     │             │
+│10. payload_size→ RandNum        │             │
+│11. payload     → RandString     │             │
+│12. binary      → RandBin        │             │
+│13. identifier  → RandInt        │             │
+│14. session_id  → RandUUID       │             │
+│15. timestamp   → RandInt        │             │
+│16. sequence    → RandLong       │             │
+│17. app_id      → RandChoice     │             │
+│18. version     → RandChoice     │             │
+│19. option      → RandChoice     │             │
+│20. priority    → RandNum        │             │
+│                                 │             │
+│ DESTINATION REMAINS FIXED       │             │
+│ dest_ip / dest_port             │             │
+└────────────────┬────────────────┘             │
+                 │                              │
+                 ▼                              │
+      ┌──────────────────────────┐              │
+      │ PACKET GENERATION LOOP   │◄─────────────┘
+      │                          │
+      │ for each packet:         │
+      └─────────────┬────────────┘
+                    │
+                    ▼
+      ┌──────────────────────────┐
+      │ get_current_fields()     │
+      │                          │
+      │ _fix_field()             │
+      │       ↓                  │
+      │ Evaluate each            │
+      │ VolatileValue            │
+      └─────────────┬────────────┘
+                    │
+                    ▼
+┌──────────────────────────────────────────────────────────┐
+│                 VOLATILITY / RANDOMIZATION               │
+│                                                          │
+│       Every evaluation produces a new value              │
+│                                                          │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐             │
+│  │ RandNum   │ │ RandFloat │ │ RandByte  │             │
+│  └───────────┘ └───────────┘ └───────────┘             │
+│                                                          │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐             │
+│  │ RandShort │ │ RandInt   │ │ RandLong  │             │
+│  └───────────┘ └───────────┘ └───────────┘             │
+│                                                          │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐             │
+│  │ RandIP    │ │ RandIP6   │ │ RandMAC   │             │
+│  └───────────┘ └───────────┘ └───────────┘             │
+│                                                          │
+│  ┌───────────┐ ┌───────────┐ ┌─────────────┐           │
+│  │ RandUUID  │ │ RandString│ │ RandBin     │           │
+│  └───────────┘ └───────────┘ └─────────────┘           │
+│                                                          │
+│  ┌─────────────┐ ┌───────────────┐                      │
+│  │ RandChoice  │ │ RandEnumKeys  │                      │
+│  └─────────────┘ └───────────────┘                      │
+│                                                          │
+│  Independent field evaluation                            │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+                         ▼
+               ┌──────────────────────┐
+               │ build_ip_packet()    │
+               └──────────┬───────────┘
+                          │
+                          ▼
+                ┌─────────────────────┐
+                │ Evaluate protocol   │
+                └──────────┬──────────┘
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+         ┌───────┐      ┌───────┐      ┌───────┐
+         │ ICMP  │      │  TCP  │      │  UDP  │
+         └───┬───┘      └───┬───┘      └───┬───┘
+             │              │              │
+             ▼              ▼              ▼
+ build_icmp_packet() build_tcp_segment() build_udp_segment()
+             │              │              │
+             └──────────────┼──────────────┘
+                            │
+                            ▼
+                   ┌──────────────────┐
+                   │ build_payload()  │
+                   │                  │
+                   │ text / binary /  │
+                   │ mixed            │
+                   └────────┬─────────┘
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │ ip_checksum() │
+                    └───────┬───────┘
+                            │
+                            ▼
+                    ┌────────────────┐
+                    │ Complete IP    │
+                    │ packet         │
+                    └───────┬────────┘
+                            │
+                  ┌─────────┴─────────┐
+                  │                   │
+               Layer 2             Layer 3
+                  │                   │
+                  ▼                   ▼
+        _send_layer2_          _send_layer3_
+        with_response()        with_response()
+                  │                   │
+                  ▼                   ▼
+             Ethernet              IP-only
+             encapsulation         transmission
+                  │                   │
+                  └─────────┬─────────┘
+                            │
+                            ▼
+                       RAW SEND
+                            │
+                            ▼
+                   ┌─────────────────┐
+                   │ More packets?   │
+                   └───────┬─────────┘
+                       YES │ NO
+                           │
+                           └──────► Repeat
+                                    field
+                                    evaluation
+                                    │
+                                    ▼
+                           ┌─────────────────┐
+                           │ Close send     │
+                           │ socket         │
+                           └────────┬────────┘
+                                    │
+                                    ▼
+                           ┌─────────────────┐
+                           │ ICMPListener    │
+                           │ get_responses() │
+                           └────────┬────────┘
+                                    │
+                                    ▼
+                           ┌─────────────────┐
+                           │ _listen()       │
+                           │                 │
+                           │ Receive packet  │
+                           │       ↓         │
+                           │ Parse IPv4      │
+                           │       ↓         │
+                           │ Check ICMP      │
+                           │ Echo Reply      │
+                           │       ↓         │
+                           │ Store response  │
+                           └────────┬────────┘
+                                    │
+                                    ▼
+                           ┌─────────────────┐
+                           │ Responses?      │
+                           └────────┬────────┘
+                              YES   │   NO
+                               │    │
+                               ▼    ▼
+                          Success   No response
+                               │    │
+                               └─┬──┘
+                                 ▼
+                             COMPLETE
